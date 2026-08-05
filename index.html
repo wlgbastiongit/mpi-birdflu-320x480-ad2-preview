@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="ad.size" content="width=320,height=480">
+<title>MPI Bird Flu Response - 320x480 (v2, Ad 2)</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 320px;
+    height: 480px;
+    overflow: hidden;
+  }
+  .banner {
+    position: relative;
+    width: 320px;
+    height: 480px;
+    cursor: pointer;
+  }
+  .frame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 320px;
+    height: 480px;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+  }
+  .frame.active {
+    opacity: 1;
+  }
+  .frame img.bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 320px;
+    height: 480px;
+    display: block;
+  }
+  .el {
+    position: absolute;
+    display: block;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+  }
+
+  /* --- shared stripe: static, sits above every frame --- */
+  .stripe-wrap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 320px;
+    height: 16.67px;
+    z-index: 5;
+  }
+  .stripe-wrap img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 320px;
+    height: 16.67px;
+  }
+
+  /* --- element placement ---
+     frame 1/5 positions reused directly from the 320x480 ad1 banner (built
+     from the client's native "Detected" PDF) since those elements - birds,
+     headline, end card - are shared across the ad1/ad2 family. Frames 2-4
+     (icon + card body) are adapted proportionally from the 300x600 ad2
+     banner: width/height scaled by the 320/300 width ratio (preserves each
+     asset's own aspect ratio, no distortion), positioned at the same
+     "text zone" top used across every 320x480 variant in this campaign,
+     with the icon peeking above the card by the same proportional offset
+     it has in the 600 version. */
+  .birds      { left: 131px;    top: 225.33px; width: 189px;    height: 254.67px; }
+  .headline   { left: 20.33px;  top: 95.33px;  width: 278.67px; height: 110.33px; transform-origin: left center; }
+
+  .card2body  { left: 25.95px; top: 174.67px; width: 269.5px; height: 207.65px; }
+  .card2icon  { left: 33.42px; top: 139.2px;  width: 113.8px; height: 113.8px; }
+  .card3body  { left: 25.95px; top: 174.67px; width: 269.5px; height: 172.45px; }
+  .card3icon  { left: 33.42px; top: 139.2px;  width: 113.8px; height: 113.8px; }
+  .card4body  { left: 25.95px; top: 174.67px; width: 269.5px; height: 185.25px; }
+  .card4icon  { left: 33.42px; top: 139.2px;  width: 113.8px; height: 113.8px; }
+
+  .card5      { left: 81.67px;  top: 143px;    width: 156.67px; height: 158.33px; }
+  .cta        { left: 81.33px;  top: 316.67px; width: 157.33px; height: 27.33px; }
+  .govtnz     { left: 210.33px; top: 430.33px; width: 90.67px;  height: 33.33px; }
+
+  /* --- keyframes ---
+     transform only: opacity is handled separately below by a plain transition, so
+     fade-in/out is always reliable regardless of whether an entrance animation is
+     running (an animation being removed does not reliably hand off to a transition). */
+  @keyframes riseUp {
+    from { transform: translateY(450px); }
+    to   { transform: translateY(0); }
+  }
+  @keyframes fadeRiseIn {
+    from { transform: translateY(20px); }
+    to   { transform: translateY(0); }
+  }
+  @keyframes expandIn {
+    from { transform: scale(0); }
+    to   { transform: scale(1); }
+  }
+  @keyframes iconFlyIn {
+    from { transform: translate(-90px, -26px) rotate(-22deg) scale(0.55); }
+    to   { transform: translate(0, 0) rotate(0) scale(1); }
+  }
+
+  /* --- per-frame entrance timing ---
+     each rule sets its own transition duration/delay (for the opacity fade-in) alongside
+     a matching animation (for the transform). On exit, none of these rules match any more,
+     so opacity simply falls back to the base .el transition (1s, no delay) - a plain,
+     always-reliable fade out in sync with the frame. */
+
+  /* frame 1: birds rise from beneath the frame and land first; headline only
+     starts growing from nothing once the birds have fully settled into place */
+  .frame.active .birds {
+    opacity: 1;
+    transition: opacity 1.6s ease-in-out;
+    animation: riseUp 1.6s cubic-bezier(.4,0,.2,1);
+  }
+  .frame.active .headline {
+    opacity: 1;
+    transition: opacity 1.1s ease-in-out 1.75s;
+    animation: expandIn 1.1s ease-out 1.75s;
+  }
+
+  /* frames 2-4 (icon cards): the symbol flies into position first, then the
+     card body (background + copy) rises and fades in behind/around it */
+  .frame.active .card2icon,
+  .frame.active .card3icon,
+  .frame.active .card4icon {
+    opacity: 1;
+    transition: opacity 0.9s ease-out;
+    animation: iconFlyIn 0.9s cubic-bezier(.2,.8,.3,1.15);
+  }
+  .frame.active .card2body,
+  .frame.active .card3body,
+  .frame.active .card4body {
+    opacity: 1;
+    transition: opacity 0.9s ease-in-out 1.05s;
+    animation: fadeRiseIn 0.9s ease-out 1.05s;
+  }
+
+  /* frame 5 (end card): the bird flu logo fades/rises in first and lingers on its own,
+     then the CTA and GOVT.NZ logo come in together well after (matches the OG poultry banner sequencing) */
+  .frame.active .card5 {
+    opacity: 1;
+    transition: opacity 0.8s ease-in-out 0.15s;
+    animation: fadeRiseIn 0.8s ease-out 0.15s;
+  }
+  .frame.active .cta,
+  .frame.active .govtnz {
+    opacity: 1;
+    transition: opacity 0.7s ease-in-out 1.8s;
+    animation: fadeRiseIn 0.7s ease-out 1.8s;
+  }
+
+  .clickthrough {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+  <div class="banner" id="banner">
+
+    <div class="frame" id="frame1">
+      <img class="bg" src="images/bg-frame1.jpg" alt="">
+      <img class="el birds" src="images/birds.webp" alt="">
+      <img class="el headline" src="images/el-frame1_headline.png" alt="Don't let bird flu take flight">
+    </div>
+
+    <div class="frame" id="frame2">
+      <img class="bg" src="images/bg-feather.jpg" alt="">
+      <img class="el card2icon" src="images/el-frame2_icon.png" alt="">
+      <img class="el card2body" src="images/el-frame2_cardbody.png" alt="Keep your distance. Stay away from sick or dead wildlife. Keep pets away too.">
+    </div>
+
+    <div class="frame" id="frame3">
+      <img class="bg" src="images/bg-feather.jpg" alt="">
+      <img class="el card3icon" src="images/el-frame3_icon.png" alt="">
+      <img class="el card3body" src="images/el-frame3_cardbody.png" alt="Keep clean. Wash your hands and clean your gear after being outdoors.">
+    </div>
+
+    <div class="frame" id="frame4">
+      <img class="bg" src="images/bg-feather.jpg" alt="">
+      <img class="el card4icon" src="images/el-frame4_icon.png" alt="">
+      <img class="el card4body" src="images/el-frame4_cardbody.png" alt="Know when to report. Search online for the latest advice.">
+    </div>
+
+    <div class="frame" id="frame5">
+      <img class="bg" src="images/bg-feather.jpg" alt="">
+      <img class="el card5" src="images/el-endcard_bubble.png" alt="Bird flu, know what to do">
+      <img class="el cta" src="images/el-endcard_cta.png" alt="Find out more">
+      <img class="el govtnz" src="images/govtnz-lockup.png" alt="GOVT.NZ">
+    </div>
+
+    <div class="stripe-wrap">
+      <img src="images/el-stripe.png" alt="">
+    </div>
+
+    <a class="clickthrough" id="clickthrough" href="#REPLACE_CLICK_URL" target="_blank" rel="noopener"></a>
+  </div>
+
+  <script>
+    // Ad-server clickTag convention. Replace with the real destination URL before trafficking.
+    var clickTag = "#REPLACE_CLICK_URL";
+    document.getElementById("clickthrough").addEventListener("click", function (e) {
+      e.preventDefault();
+      window.open(clickTag, "_blank");
+    });
+
+    var frames = [
+      document.getElementById("frame1"),
+      document.getElementById("frame2"),
+      document.getElementById("frame3"),
+      document.getElementById("frame4"),
+      document.getElementById("frame5")
+    ];
+    var durations = [4200, 6900, 5900, 5900, 5200]; // ms each frame is shown
+    var maxLoops = 2; // full sequence repeats, then holds on the end card
+    var index = 0;
+    var loopCount = 0;
+
+    function showFrame(i) {
+      frames.forEach(function (f, idx) {
+        f.classList.toggle("active", idx === i);
+      });
+    }
+
+    function advance() {
+      var next = index + 1;
+
+      if (next >= frames.length) {
+        loopCount++;
+        if (loopCount >= maxLoops) {
+          // Stay on the end card (last frame) permanently.
+          return;
+        }
+        next = 0;
+      }
+
+      index = next;
+      showFrame(index);
+      setTimeout(advance, durations[index]);
+    }
+
+    // Frame 1 starts out inactive (opacity 0, per .frame's base style) so that
+    // activating it here is a genuine state change - required for its entrance
+    // transition/animation to actually play. A double rAF lets the browser paint
+    // the inactive state first; without it, the very first activation can get
+    // coalesced with the initial render and the entrance skips straight to its
+    // end state.
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        showFrame(0);
+        setTimeout(advance, durations[0]);
+      });
+    });
+  </script>
+</body>
+</html>

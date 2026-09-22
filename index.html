@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="ad.size" content="width=320,height=480">
+<script src="https://s0.2mdn.net/ads/studio/Enabler.js"></script>
 <title>MPI Bird Flu Response - 320x480 (v2, Ad 2)</title>
 <style>
   html, body {
@@ -177,7 +178,7 @@
 
     <div class="frame" id="frame1">
       <img class="bg" src="images/bg-frame1.jpg" alt="">
-      <img class="el birds" src="images/birds.webp" alt="">
+      <img class="el birds" src="images/birds.png" alt="">
       <img class="el headline" src="images/el-frame1_headline.png" alt="Don't let bird flu take flight">
     </div>
 
@@ -210,15 +211,20 @@
       <img src="images/el-stripe.png" alt="">
     </div>
 
-    <a class="clickthrough" id="clickthrough" href="#REPLACE_CLICK_URL" target="_blank" rel="noopener"></a>
+    <a class="clickthrough" id="clickthrough" target="_blank" rel="noopener"></a>
   </div>
 
   <script>
-    // Ad-server clickTag convention. Replace with the real destination URL before trafficking.
-    var clickTag = "#REPLACE_CLICK_URL";
+    // Standard ad-server clickTag convention. CM360 assigns the destination URL at trafficking time.
+    var clickTag = "";
     document.getElementById("clickthrough").addEventListener("click", function (e) {
       e.preventDefault();
-      window.open(clickTag, "_blank");
+      var exitUrl = window.clickTag || clickTag;
+      if (typeof Enabler !== "undefined" && Enabler.isInitialized && Enabler.isInitialized()) {
+        Enabler.exit("Exit", exitUrl);
+      } else {
+        window.open(exitUrl, "_blank");
+      }
     });
 
     var frames = [
